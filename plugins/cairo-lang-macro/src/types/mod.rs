@@ -16,9 +16,24 @@ pub enum ProcMacroResult {
         token_stream: TokenStream,
         aux_data: Option<AuxData>,
         diagnostics: Vec<Diagnostic>,
+        full_path_markers: Vec<String>,
     },
     /// Plugin ordered item removal.
     Remove { diagnostics: Vec<Diagnostic> },
+}
+
+/// Result of inline procedural macro code generation.
+///
+/// This enum differs from `ProcMacroResult` by not having `Remove` variant.
+pub enum InlineProcMacroResult {
+    /// Plugin has not taken any action.
+    Leave { diagnostics: Vec<Diagnostic> },
+    /// Plugin generated [`TokenStream`] replacement.
+    Replace {
+        token_stream: TokenStream,
+        aux_data: Option<AuxData>,
+        diagnostics: Vec<Diagnostic>,
+    },
 }
 
 /// An abstract stream of Cairo tokens.
@@ -264,6 +279,7 @@ impl ProcMacroResult {
             aux_data,
             token_stream,
             diagnostics: Vec::new(),
+            full_path_markers: Vec::new(),
         }
     }
 
@@ -276,6 +292,71 @@ impl ProcMacroResult {
         };
         self
     }
+}
+
+impl InlineProcMacroResult {
+    /// Create new [`InlineProcMacroResult::Leave`] variant, empty diagnostics set.
+    pub fn leave() -> Self {
+        Self::Leave {
+            diagnostics: Vec::new(),
+        }
+    }
+
+    /// Create new [`InlineProcMacroResult::Replace`] variant, empty diagnostics set.
+    pub fn replace(token_stream: TokenStream, aux_data: Option<AuxData>) -> Self {
+        Self::Replace {
+            aux_data,
+            token_stream,
+            diagnostics: Vec::new(),
+        }
+    }
+
+    /// Append diagnostics to the [`InlineProcMacroResult`] diagnostics set.
+    pub fn with_diagnostics(mut self, diagnostics: Diagnostics) -> Self {
+        match &mut self {
+            Self::Leave { diagnostics: d } => d.extend(diagnostics),
+            Self::Replace { diagnostics: d, .. } => d.extend(diagnostics),
+        };
+        self
+    }
+}
+
+impl From<InlineProcMacroResult> for ProcMacroResult {
+    fn from(result: InlineProcMacroResult) -> Self {
+        match result {
+            InlineProcMacroResult::Leave { diagnostics } => ProcMacroResult::Leave { diagnostics },
+            InlineProcMacroResult::Replace {
+                token_stream,
+                aux_data,
+                diagnostics,
+            } => ProcMacroResult::Replace {
+                token_stream,
+                aux_data,
+                diagnostics,
+                full_path_markers: Vec::new(),
+            },
+        }
+    }
+}
+
+/// Input for the post-process callback.
+#[derive(Clone, Debug)]
+pub struct PostProcessContext {
+    /// Auxiliary data returned by the procedural macro.
+    pub aux_data: Vec<AuxData>,
+    /// Full path markers resolved by the host.
+    pub full_path_markers: Vec<FullPathMarker>,
+}
+
+/// Full path marker.
+///
+/// This contains information about full cairo path resolved by the host, identified by key.
+#[derive(Clone, Debug)]
+pub struct FullPathMarker {
+    /// Key returned by the procedural macro.
+    pub key: String,
+    /// Full path resolved by the host.
+    pub full_path: String,
 }
 
 #[cfg(test)]
