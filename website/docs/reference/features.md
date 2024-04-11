@@ -1,12 +1,12 @@
 # Features
 
-Features provide a mechanism to express conditional compilation, which allows for enabling or disabling specific parts of the code during the build process.
+Features in Scarb provide a way to conditionally compile specific parts of the code during the build process.
 
 ## `[features]` section
 
-A package defines a set of features in the `[features]` section of the `Scarb.toml` file. Each feature specifies an array of other features that it enables.
+In the `Scarb.toml` file, features are defined within the `[features]` section. Each feature lists other features that it enables.
 
-For example, a package that supports many hash functions may define the following features:
+For example, a package supporting various hash functions might define features like this:
 
 ```toml
 [features]
@@ -15,7 +15,7 @@ pedersen = []
 keccak = []
 ```
 
-With these features defined, cfg expressions can be used to conditionally include code to support the requested feature at compile time. For example:
+With these features set, conditional compilation expressions (`cfg` expressions) can selectively include code to support requested features during compile time. For instance:
 
 ```rust
 // Conditionally include a package
@@ -29,18 +29,17 @@ fn hash_pedersen(value: felt252) -> felt252 {
 }
 ```
 
-To enable certain features, pass the `--features` flag with a list of features to be enabled. Multiple features should be separated by commas. For instance, to build this package with only the `poseidon` and `pedersen` features enabled, run:
-
+To enable specific features, use the `--features` flag followed by a comma-separated list of features. For example, to build with only the `poseidon` and `pedersen` features enabled:
 
 ```
 scarb build --features poseidon,pedersen
 ```
 
-It is also possible to enable all features by passing the `--all-features` flag.
+Enabling all features can be done with the `--all-features` flag.
 
-## `default` feature
+## `default` features
 
-By default, all features are disabled unless explicitly enabled with the `--features` flag. This behavior can be changed by specifying a default feature, e.g.:
+By default, all features are disabled unless explicitly enabled with the `--features` flag. However, this behavior can be changed by specifying a default feature in the `[features]` section, like so:
 
 ```toml
 [features]
@@ -50,8 +49,11 @@ pedersen = []
 keccak = []
 ```
 
-When building, the compiler will enable the default feature, which, in turn, enables all listed features.
+During compilation, the compiler will enable the default feature, which in turn activates all listed features.
 
-The default feature can be disabled by passing the `--no-default-features` flag.
+To disable the default feature, use the `--no-default-features` flag.
 
-So, for the example above, running `scarb build` would enable `poseidon` and `pedersen` features; `scarb build --features keccak` - all `poseidon`, `pedersen` and `keccak` features; and `scarb build --no-default-features --features keccak` - only `keccak` feature.
+For example, in the provided scenario:
+- Running `scarb build` would enable `poseidon` and `pedersen` features.
+- `scarb build --features keccak` would enable `poseidon`, `pedersen`, and `keccak` features.
+- `scarb build --no-default-features --features keccak` would enable only the `keccak` feature.
