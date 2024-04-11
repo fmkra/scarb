@@ -37,4 +37,21 @@ For instance, to build this package with only `poseidon` and `pedersen` enabled,
 scarb build --features poseidon,pedersen
 ```
 
-## TODO: default features
+It is also possible to enable all features by passing `--all-features` flag.
+
+## `default` feature
+
+By default, all features are disabled unless explicitly enabled with `--features` flag. This behavior can be changed by specifying the default feature, e.g.
+```toml
+[features]
+default = ["poseidon", "pedersen"]
+poseidon = []
+pedersen = []
+keccak = []
+```
+
+When building, compiler will enable the default feature which in turn enables all listed features.
+
+The default feature can be disabled by passing `--no-default-features` flag.
+
+So for the example above, running `scarb build` would enable `poseidon` and `pedersen` features; `scarb build --features keccak` - all `poseidon`, `pedersen` and `keccak` features; and `scarb build --no-default-features --features keccak` only `keccak` feature.
